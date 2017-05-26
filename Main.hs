@@ -68,12 +68,12 @@ rate d =  average (fmap coincidence d) - fromIntegral (length d) / 3000.0
 
 -- Multiply elements of lists together and add up the results.
 dot :: [Float] -> [Float] -> Float
-dot l0 l1 = sum $ zipWith (*) l0 l1
+dot v0 v1 = sum $ zipWith (*) v0 v1
 
 -- Given two lists of floats, rotate one of them by the number of
 -- characters indicated by letter and then 'dot' them together.
 rotateAndDot :: [Float] -> [Float] -> Char -> Float
-rotateAndDot l0 l1 ltr = dot l0 (drop (ord ltr - ord 'A') (cycle l1))  
+rotateAndDot v0 v1 ltr = dot v0 (drop (ord ltr - ord 'A') (cycle v1))  
 
 -- find decoding offset that results in best match 
 -- between actual char frequencies and expected frequencies
