@@ -70,17 +70,17 @@ rate d =  average (fmap coincidence d) - fromIntegral (length d) / 3000.0
 dot :: [Float] -> [Float] -> Float
 dot l0 l1 = sum $ zipWith (*) l0 l1
 
--- Given two lists of floats, shift one of them by the number of
+-- Given two lists of floats, rotate one of them by the number of
 -- characters indicated by letter and then 'dot' them together.
-shiftAndDot :: [Float] -> [Float] -> Char -> Float
-shiftAndDot l0 l1 ltr = dot l0 (drop (ord ltr - ord 'A') (cycle l1))  
+rotateAndDot :: [Float] -> [Float] -> Char -> Float
+rotateAndDot l0 l1 ltr = dot l0 (drop (ord ltr - ord 'A') (cycle l1))  
 
 -- find decoding offset that results in best match 
 -- between actual char frequencies and expected frequencies
 getKeyChar :: [Float] -> String -> Char
 getKeyChar expected sample =
     let actual = fmap (fromIntegral . countChar sample) ['A'..'Z']
-    in maximumBy (comparing $ shiftAndDot expected actual) ['A'..'Z']
+    in maximumBy (comparing $ rotateAndDot expected actual) ['A'..'Z']
 
 main = do
     let cr = filter (/=' ') crypt
