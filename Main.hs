@@ -73,10 +73,10 @@ dot v0 v1 = sum $ zipWith (*) v0 v1
 -- Given two lists of floats, rotate one of them by the number of
 -- characters indicated by letter and then 'dot' them together.
 rotateAndDot :: [Float] -> [Float] -> Char -> Float
-rotateAndDot v0 v1 ltr = dot v0 (drop (ord ltr - ord 'A') (cycle v1))  
+rotateAndDot v0 v1 letter = dot v0 (drop (ord letter - ord 'A') (cycle v1))  
 
--- find decoding offset that results in best match 
--- between actual char frequencies and expected frequencies
+-- Find decoding offset that results in best match 
+-- between actual char frequencies and expected frequencies.
 getKeyChar :: [Float] -> String -> Char
 getKeyChar expected sample =
     let actual = fmap (fromIntegral . countChar sample) ['A'..'Z']
@@ -90,4 +90,4 @@ main = do
         bestDistribution = maximumBy (comparing rate) distributions
         key = fmap (getKeyChar englishFrequencies) bestDistribution
         alphaSum a b = cycle ['A'..'Z'] !! (26 + (ord b - ord a))
-    mapM_ putStrLn [key, zipWith alphaSum (cycle key) cr]
+    mapM_ putStrLn ["Key: " ++ key, "Decrypted Text: " ++ zipWith alphaSum (cycle key) cr]
