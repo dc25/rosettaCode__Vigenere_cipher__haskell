@@ -2,7 +2,7 @@ import Data.List
 import Data.Ord (comparing)
 import Data.Char (ord)
 
-english = 
+englishFrequencies = 
      [ 0.08167, 0.01492, 0.02782, 0.04253, 
        0.12702, 0.02228, 0.02015, 0.06094, 
        0.06966, 0.00153, 0.00772, 0.04025, 
@@ -34,18 +34,23 @@ crypt = "\
 average :: [Float] -> Float
 average as = sum as / fromIntegral (length as)
 
+-- Count the occurrence of a char in a string.
 countChar :: String -> Char -> Int
 countChar s c = length $ filter (==c) s
 
+-- Break a string up into substrings of n chars.
 breakup :: Int -> [a] -> [[a]]
 breakup _ [] = []
 breakup n as = 
     let (h, r) = splitAt n as
     in h:breakup n r
 
-distribute :: Int -> [a] -> [[a]]
-distribute n as = transpose $ breakup n as
+-- Dole out elements of a string over a n element distribution.
+distribute :: [a] -> Int -> [[a]]
+distribute as n = transpose $ breakup n as
 
+-- The probability that members of a pair of characters taken randomly
+-- from a given string are equal.
 coincProb :: String -> Float
 coincProb str = 
     let alphabet = nub $ sort str
@@ -55,12 +60,12 @@ coincProb str =
         n = fromIntegral $ sum $ fmap (\cc -> cc * (cc-1)) ccs
     in n / d
 
-coincIndex :: Int -> String -> Float
-coincIndex n as =  
-    -- The correlation increases artificially for smaller
-    -- pieces/longer keys, so weigh against them a little
-    let offsetCheat = fromIntegral n / 3000.0
-    in average (fmap coincProb (distribute n as)) - offsetCheat
+-- Use the average probablity of coincidence for all the members of
+-- a distribution to rate the distribution - the higher the better.
+-- The correlation increases artificially for smaller
+-- pieces/longer keys, so weigh against them a little
+rate :: [String] -> Float
+rate d =  average (fmap coincProb d) - fromIntegral (length d) / 3000.0 
 
 -- find decoding offset that results in best match 
 -- between actual char frequencies and expected frequencies
@@ -72,8 +77,7 @@ getKeyChar expectedFrequencies encodedString =
 
 -- Add two upper case letters using modulo arithmetic
 alphaSum :: Char -> Char -> Char
-alphaSum a b = 
-   cycle ['A'..'Z'] !! (26 + (ord b - ord a))
+alphaSum a b = cycle ['A'..'Z'] !! (26 + (ord b - ord a))
 
 -- given a key and cipher text encoded with that key, return the plaintext
 decode :: String -> String -> String
@@ -83,8 +87,8 @@ main = do
     let cr = filter (/=' ') crypt
         -- Assume that if there are less than 20 characters
         -- per column, the key's too long to guess
-        cIndices = fmap (\n -> (n, coincIndex n cr)) [1..length cr `div` 20]
-        keyLen = fst $ maximumBy (comparing snd) cIndices
-        ceasars = distribute keyLen cr
-        key = fmap (getKeyChar english) ceasars
+        distributions = fmap (distribute cr) [1..length cr `div` 20]
+        ratedDistributions = fmap (\d -> (d, rate d)) distributions
+        bestDistribution = fst $ maximumBy (comparing snd) ratedDistributions
+        key = fmap (getKeyChar englishFrequencies) bestDistribution
     mapM_ putStrLn [key, decode key cr]
