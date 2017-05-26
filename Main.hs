@@ -53,11 +53,10 @@ distribute as n = transpose $ breakup n as
 -- from a given string are equal.
 coincProb :: String -> Float
 coincProb str = 
-    let alphabet = nub $ sort str
-        ccs = fmap (countChar str) alphabet
+    let charCounts = fmap (countChar str) (nub $ sort str)
         strln = length str
         d = fromIntegral $ strln * (strln - 1)
-        n = fromIntegral $ sum $ fmap (\cc -> cc * (cc-1)) ccs
+        n = fromIntegral $ sum $ fmap (\cc -> cc * (cc-1)) charCounts
     in n / d
 
 -- Use the average probablity of coincidence for all the members of
@@ -75,14 +74,6 @@ getKeyChar expectedFrequencies encodedString =
         dots = fmap (\ltr -> (ltr, sum $ zipWith (*) expectedFrequencies (drop (ord ltr - ord 'A') (cycle actualFrequencies))) ) ['A'..'Z']
     in fst $ maximumBy (comparing snd) dots
 
--- Add two upper case letters using modulo arithmetic
-alphaSum :: Char -> Char -> Char
-alphaSum a b = cycle ['A'..'Z'] !! (26 + (ord b - ord a))
-
--- given a key and cipher text encoded with that key, return the plaintext
-decode :: String -> String -> String
-decode key = zipWith alphaSum (cycle key) 
-
 main = do
     let cr = filter (/=' ') crypt
         -- Assume that if there are less than 20 characters
@@ -91,4 +82,5 @@ main = do
         ratedDistributions = fmap (\d -> (d, rate d)) distributions
         bestDistribution = fst $ maximumBy (comparing snd) ratedDistributions
         key = fmap (getKeyChar englishFrequencies) bestDistribution
-    mapM_ putStrLn [key, decode key cr]
+        alphaSum a b = cycle ['A'..'Z'] !! (26 + (ord b - ord a))
+    mapM_ putStrLn [key, zipWith alphaSum (cycle key) cr]
