@@ -31,6 +31,12 @@ crypt = "\
     \FWAML ZZRXJ EKAHV FASMU LVVUT TGK\
     \"
 
+average :: [Float] -> Float
+average as = sum as / fromIntegral (length as)
+
+countChar :: String -> Char -> Int
+countChar s c = length $ filter (==c) s
+
 breakup :: Int -> [a] -> [[a]]
 breakup _ [] = []
 breakup n as = 
@@ -43,29 +49,25 @@ distribute n as = transpose $ breakup n as
 coincProb :: String -> Float
 coincProb str = 
     let alphabet = nub $ sort str
-        ccs = fmap (\ch -> (length.filter (==ch)) str) alphabet
+        ccs = fmap (countChar str) alphabet
         strln = length str
         d = fromIntegral $ strln * (strln - 1)
         n = fromIntegral $ sum $ fmap (\cc -> cc * (cc-1)) ccs
     in n / d
-
-mean :: [Float] -> Float
-mean as = sum as / fromIntegral (length as)
- 
 
 coincIndex :: Int -> String -> Float
 coincIndex n as =  
     -- The correlation increases artificially for smaller
     -- pieces/longer keys, so weigh against them a little
     let offsetCheat = fromIntegral n / 3000.0
-    in mean (fmap coincProb (distribute n as)) - offsetCheat
+    in average (fmap coincProb (distribute n as)) - offsetCheat
 
 -- find decoding offset that results in best match 
 -- between actual char frequencies and expected frequencies
 getKeyChar :: [Float] -> String -> Char
-getKeyChar expected caesar =
-    let actual = fmap (\ch -> (fromIntegral.length.filter (==ch)) caesar) ['A'..'Z']
-        dots = fmap (\ltr -> (ltr, sum $ zipWith (*) expected (drop (ord ltr - ord 'A') (cycle actual))) ) ['A'..'Z']
+getKeyChar expectedFrequencies encodedString =
+    let actualFrequencies = fmap (fromIntegral . countChar encodedString) ['A'..'Z']
+        dots = fmap (\ltr -> (ltr, sum $ zipWith (*) expectedFrequencies (drop (ord ltr - ord 'A') (cycle actualFrequencies))) ) ['A'..'Z']
     in fst $ maximumBy (comparing snd) dots
 
 -- Add two upper case letters using modulo arithmetic
